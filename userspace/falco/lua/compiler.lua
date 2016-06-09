@@ -156,6 +156,48 @@ function check_for_ignored_syscalls_events(ast, filter_type, source)
    parser.traverse_ast(ast, "BinaryRelOp", cb)
 end
 
+-- XXX/mstemm How to handle not?
+function get_evttypes(ast, source)
+
+   local evttypes = {}
+   local found_event = false
+
+   function cb(node)
+      if node.left.type == "FieldName" and node.left.value == "evt.type" then
+	 if node.operator == "in" then
+	    for i, v in ipairs(node.right.elements) do
+	       if v.type == "BareString" then
+		  if node.left.value == "evt.type" then
+		     found_event = true
+
+		     for id in string.gmatch(events[v.value], "%S+") do
+			evttypes[id] = 1
+		     end
+		  end
+	       end
+	    end
+	 else
+	    if node.right.type == "BareString" then
+	       if node.left.value == "evt.type" then
+		  found_event = true
+		  for id in string.gmatch(events[node.right.value], "%S+") do
+		     evttypes[id] = 1
+		  end
+	       end
+	    end
+	 end
+      end
+   end
+
+   parser.traverse_ast(ast, "BinaryRelOp", cb)
+
+   if not found_event then
+      error("Rule must contain an evt.type condition: "..source)
+   end
+
+   return evttypes
+end
+
 function compiler.compile_macro(line)
    local ast, error_msg = parser.parse_filter(line)
 
@@ -196,7 +238,9 @@ function compiler.compile_filter(source, macro_defs)
       error("Unexpected top-level AST type: "..ast.type)
    end
 
-   return ast
+   evttypes = get_evttypes(ast, source)
+
+   return ast, evttypes
 end
 
 
