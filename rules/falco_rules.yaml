@@ -29,11 +29,11 @@
     evt.arg.flags contains O_RDWR)
 
 - macro: rename
-  condition: syscall.type = rename
+  condition: evt.type = rename
 - macro: mkdir
-  condition: syscall.type = mkdir
+  condition: evt.type = mkdir
 - macro: remove
-  condition: syscall.type in (remove, rmdir, unlink, unlink_at)
+  condition: evt.type in (remove, rmdir, unlink, unlink_at)
 
 - macro: modify
   condition: rename or remove
@@ -150,11 +150,11 @@
 
 # Network
 - macro: inbound
-  condition: ((syscall.type=listen and evt.dir=>) or (syscall.type=accept and evt.dir=<))
+  condition: ((evt.type=listen and evt.dir=>) or (evt.type=accept and evt.dir=<))
 
-# Currently sendto is an ignored syscall, otherwise this could also check for (syscall.type=sendto and evt.dir=>)
+# Currently sendto is an ignored syscall, otherwise this could also check for (evt.type=sendto and evt.dir=>)
 - macro: outbound
-  condition: syscall.type=connect and evt.dir=< and (fd.typechar=4 or fd.typechar=6)
+  condition: evt.type=connect and evt.dir=< and (fd.typechar=4 or fd.typechar=6)
 
 - macro: ssh_port
   condition: fd.lport=22
@@ -165,7 +165,7 @@
 
 # System
 - macro: modules
-  condition: syscall.type in (delete_module, init_module)
+  condition: evt.type in (delete_module, init_module)
 - macro: container
   condition: container.id != host
 - macro: interactive
@@ -261,7 +261,7 @@
 
 - rule: change_thread_namespace
   desc: an attempt to change a program/thread\'s namespace (commonly done as a part of creating a container) by calling setns.
-  condition: syscall.type = setns and not proc.name in (docker, sysdig, dragent)
+  condition: evt.type = setns and not proc.name in (docker, sysdig, dragent)
   output: "Namespace change (setns) by unexpected program (user=%user.name command=%proc.cmdline container=%container.id)"
   priority: WARNING
 
