@@ -33,7 +33,7 @@
 - macro: mkdir
   condition: evt.type = mkdir
 - macro: remove
-  condition: evt.type in (remove, rmdir, unlink, unlink_at)
+  condition: evt.type in (rmdir, unlink, unlinkat)
 
 - macro: modify
   condition: rename or remove
